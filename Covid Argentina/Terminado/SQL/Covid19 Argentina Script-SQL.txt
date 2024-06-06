@@ -1,0 +1,78 @@
+-- Cargar los datos a la base de datos
+LOAD DATA INFILE 'covid19_argentina.csv' 
+INTO TABLE covid19_argentina 
+FIELDS TERMINATED BY ';' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+select * from covid19_argentina;
+
+-- Copia de la tabla para trabajar 
+CREATE TABLE covid19_argentina_copia LIKE covid19_argentina;
+INSERT INTO covid19_argentina_copia SELECT * FROM covid19_argentina;
+
+select * from covid19_argentina_copia;
+
+-- Cambiar los tipos de datos de las columnas 
+-- Columna fecha
+UPDATE covid19_argentina_copia
+SET covid19_argentina_copia.﻿fecha = str_to_date(covid19_argentina_copia.﻿fecha,"%Y-%m-%d");
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN ﻿fecha DATE;
+
+-- Columna dia_inicio
+SELECT cast(dia_inicio AS unsigned) FROM covid19_argentina_copia;
+UPDATE covid19_argentina_copia
+SET dia_inicio = cast(dia_inicio AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN dia_inicio int;
+
+-- Columna dia_cuarentena
+UPDATE covid19_argentina_copia
+SET dia_cuarentena = 0
+WHERE dia_cuarentena = "";
+UPDATE covid19_argentina_copia
+SET dia_cuarentena = cast(dia_cuarentena AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN dia_cuarentena int;
+
+-- Columna indice_pobreza
+UPDATE covid19_argentina_copia
+SET indice_pobreza = cast(indice_pobreza AS float);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN indice_pobreza float;
+
+-- Columna total_casos_pais
+UPDATE covid19_argentina_copia
+SET total_casos_pais = cast(total_casos_pais AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN total_casos_pais int;
+SELECT total_casos_pais FROM covid19_argentina_copia;
+
+-- Columna nuevos_casos
+UPDATE covid19_argentina_copia
+SET nuevos_casos = cast(nuevos_casos AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN nuevos_casos int;
+
+-- Columna nuevos_fallecidos
+UPDATE covid19_argentina_copia
+SET nuevos_fallecidos = cast(nuevos_fallecidos AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN nuevos_fallecidos int;
+
+-- Columna total_fallecidos_pais
+UPDATE covid19_argentina_copia
+SET total_fallecidos_pais = cast(total_fallecidos_pais AS unsigned);
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN total_fallecidos_pais int;
+
+-- Columna total_recuperados
+SELECT total_recuperados FROM covid19_argentina_copia;
+UPDATE covid19_argentina_copia
+SET total_recuperados = NULL
+WHERE total_recuperados = "";
+UPDATE covid19_argentina_copia
+SET total_recuperados = substring_index(total_recuperados,",",1)
+WHERE total_recuperados IS NOT NULL;
+UPDATE covid19_argentina_copia
+SET total_recuperados = cast(total_recuperados AS unsigned)
+WHERE total_recuperados IS NOT NULL;
+ALTER TABLE covid19_argentina_copia MODIFY COLUMN total_recuperados int;
+
+-- Crear otra tabla para hacer el EDA 
+CREATE TABLE covid19_argentina_EDA LIKE covid19_argentina_copia;
+INSERT INTO covid19_argentina_EDA SELECT * FROM covid19_argentina_copia;
